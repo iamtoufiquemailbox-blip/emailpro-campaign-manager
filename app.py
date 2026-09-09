@@ -115,7 +115,11 @@ def send_campaign():
     fail_count = 0
 
     try:
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        # Using port 587 with STARTTLS and a 15-second timeout to prevent Render worker timeout
+        server = smtplib.SMTP('smtp.gmail.com', 587, timeout=15)
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
         server.login(smtp_email, smtp_pass)
 
         att_bytes = None
