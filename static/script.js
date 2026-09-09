@@ -1,3 +1,5 @@
+let currentRecipients = [];
+
 // Upload CSV
 document.getElementById('upload-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -11,8 +13,9 @@ document.getElementById('upload-form').addEventListener('submit', async (e) => {
     const res = await fetch('/api/upload', { method: 'POST', body: formData });
     const data = await res.json();
     if (res.ok) {
+      currentRecipients = data.recipients || [];
       document.getElementById('metric-total').textContent = data.count;
-      renderTable(data.recipients);
+      renderTable(currentRecipients);
       alert(data.message);
     } else {
       alert(data.error);
@@ -32,9 +35,10 @@ document.getElementById('classify-btn').addEventListener('click', async () => {
     const res = await fetch('/api/classify', { method: 'POST' });
     const data = await res.json();
     if (res.ok) {
+      currentRecipients = data.recipients || [];
       document.getElementById('metric-biz').textContent = data.business_count;
       document.getElementById('metric-ind').textContent = data.individual_count;
-      renderTable(data.recipients);
+      renderTable(currentRecipients);
       alert('AI classification complete!');
     } else {
       alert(data.error);
@@ -58,6 +62,7 @@ document.getElementById('campaign-form').addEventListener('submit', async (e) =>
   formData.append('target', document.getElementById('target-segment').value);
   formData.append('subject', document.getElementById('campaign-subject').value);
   formData.append('body', document.getElementById('campaign-body').value);
+  formData.append('recipients', JSON.stringify(currentRecipients));
 
   const file = document.getElementById('campaign-attachment').files[0];
   if (file) formData.append('attachment', file);
@@ -66,8 +71,9 @@ document.getElementById('campaign-form').addEventListener('submit', async (e) =>
     const res = await fetch('/api/send-campaign', { method: 'POST', body: formData });
     const data = await res.json();
     if (res.ok) {
+      currentRecipients = data.recipients || currentRecipients;
       document.getElementById('metric-delivered').textContent = data.delivered;
-      renderTable(data.recipients);
+      renderTable(currentRecipients);
       alert(`Sent: ${data.delivered} | Failed: ${data.failed}`);
     } else {
       alert(data.error);
