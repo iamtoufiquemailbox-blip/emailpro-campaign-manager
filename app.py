@@ -95,10 +95,17 @@ def send_campaign():
     else:
         recipients_data = SESSION_DATA.get("recipients", [])
 
+    # Resilient fuzzy segment filtering
     filtered = []
     for r in recipients_data:
         cat = str(r.get("category", "")).strip().lower()
-        if "all" in target or cat == target:
+        if "all" in target:
+            filtered.append(r)
+        elif "ind" in target and "ind" in cat:
+            filtered.append(r)
+        elif ("bus" in target or "biz" in target) and ("bus" in cat or "biz" in cat):
+            filtered.append(r)
+        elif cat == target:
             filtered.append(r)
 
     if not filtered:
