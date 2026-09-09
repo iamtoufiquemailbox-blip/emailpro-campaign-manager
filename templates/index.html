@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EmailPro — Campaign Manager & AI Classifier</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-6">
+  <div class="max-w-6xl mx-auto space-y-6">
+    
+    <!-- Top Header -->
+    <header class="flex justify-between items-center border-b border-slate-700 pb-4">
+      <div>
+        <h1 class="text-2xl font-bold text-indigo-400">EmailPro Dashboard</h1>
+        <p class="text-sm text-slate-400">AI-Powered Email Classifier and Campaign Manager</p>
+      </div>
+      <a href="/api/export" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded font-semibold text-sm transition">
+        📥 Export CSV Report
+      </a>
+    </header>
+
+    <!-- Metrics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
+        <p class="text-xs text-slate-400 font-medium">TOTAL LOADED</p>
+        <h2 id="metric-total" class="text-3xl font-bold text-white mt-1">0</h2>
+      </div>
+      <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
+        <p class="text-xs text-slate-400 font-medium">BUSINESS EMAILS</p>
+        <h2 id="metric-biz" class="text-3xl font-bold text-blue-400 mt-1">0</h2>
+      </div>
+      <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
+        <p class="text-xs text-slate-400 font-medium">INDIVIDUAL EMAILS</p>
+        <h2 id="metric-ind" class="text-3xl font-bold text-purple-400 mt-1">0</h2>
+      </div>
+      <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
+        <p class="text-xs text-slate-400 font-medium">DELIVERED</p>
+        <h2 id="metric-delivered" class="text-3xl font-bold text-emerald-400 mt-1">0</h2>
+      </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <!-- Left: Upload & Classification -->
+      <div class="space-y-6">
+        <div class="bg-slate-800 p-5 rounded-lg border border-slate-700 space-y-4">
+          <h3 class="text-lg font-semibold text-white">1. Upload Recipient List (.csv)</h3>
+          <form id="upload-form" class="space-y-3">
+            <input type="file" id="csv-file" accept=".csv" required class="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer"/>
+            <button type="submit" class="w-full bg-slate-700 hover:bg-slate-600 py-2 rounded text-sm font-medium transition">
+              Upload CSV
+            </button>
+          </form>
+          <button id="classify-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 py-2 rounded text-sm font-semibold transition">
+            ✨ Run AI Classification (Gemini)
+          </button>
+        </div>
+
+        <!-- Email Table View -->
+        <div class="bg-slate-800 p-5 rounded-lg border border-slate-700 max-h-80 overflow-y-auto">
+          <h3 class="text-lg font-semibold text-white mb-3">Recipients List</h3>
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead>
+              <tr class="border-b border-slate-700 text-xs text-slate-400">
+                <th class="py-2">Email</th>
+                <th class="py-2">Category</th>
+                <th class="py-2">Status</th>
+              </tr>
+            </thead>
+            <tbody id="recipients-tbody">
+              <tr>
+                <td colspan="3" class="py-4 text-center text-slate-500">No data loaded yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Right: Send Campaign Form -->
+      <div class="bg-slate-800 p-5 rounded-lg border border-slate-700 space-y-4">
+        <h3 class="text-lg font-semibold text-white">2. Launch Campaign</h3>
+        <form id="campaign-form" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Target Segment</label>
+            <select id="target-segment" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-white">
+              <option value="All">All Emails</option>
+              <option value="Business">Business Only</option>
+              <option value="Individual">Individual Only</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Subject</label>
+            <input type="text" id="campaign-subject" required placeholder="Subject line" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-white"/>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Message Body</label>
+            <textarea id="campaign-body" rows="4" required placeholder="Type your email content here..." class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-white"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Attachment (Optional)</label>
+            <input type="file" id="campaign-attachment" class="block w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:bg-slate-700 file:text-white cursor-pointer"/>
+          </div>
+          <button type="submit" id="send-btn" class="w-full bg-emerald-600 hover:bg-emerald-500 py-2 rounded text-sm font-semibold transition">
+            🚀 Send Bulk Campaign
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
