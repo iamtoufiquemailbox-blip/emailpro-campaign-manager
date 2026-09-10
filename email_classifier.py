@@ -2,25 +2,28 @@ import os
 import json
 from google import genai
 from google.genai import types
-from dotenv import load_dotenv
 
-load_dotenv()
+def classify_emails_with_gemini(emails):
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return {email: "Individual" for email in emails}
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    client = genai.Client(api_key=api_key)
 
-def classify_emails_with_gemini(email_list):
-    """
-    Sends email addresses to Gemini to classify as 'Business' or 'Individual'.
-    Returns a dictionary mapping each email to its category.
-    """
     prompt = f"""
-    Analyze the following list of email addresses and classify each one as either 'Business' (corporate/work email with custom company domain) or 'Individual' (public providers like gmail.com, yahoo.com, outlook.com, hotmail.com).
-    
-    Email list:
-    {json.dumps(email_list)}
-    
-    Respond STRICTLY with valid JSON in this exact format, with no markdown formatting:
-    {{"results": [{{"email": "...", "category": "Business"}}, {{"email": "...", "category": "Individual"}}]}}
+    You are an email categorization model. Analyze the following list of email addresses:
+    {json.dumps(emails)}
+
+    Classify each email strictly as either "Business" or "Individual".
+    - "Business" covers corporate domains, companies, work domains, organizations, and professional addresses.
+    - "Individual" covers general personal mailbox providers (gmail.com, yahoo.com, outlook.com, hotmail.com, icloud.com, etc.).
+
+    Return ONLY a single valid JSON object mapping every input email to its category.
+    Example:
+    {{
+      "john@company.com": "Business",
+      "sarah@gmail.com": "Individual"
+    }}
     """
 
     try:
@@ -31,14 +34,13 @@ def classify_emails_with_gemini(email_list):
                 response_mime_type="application/json"
             )
         )
-        data = json.loads(response.text)
-        return {item["email"]: item["category"] for item in data.get("results", [])}
-    except Exception as e:
-        print("Gemini API error:", e)
-        # Fallback heuristic if API quota runs out or network fails
-        fallback = {}
-        common_providers = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com"]
-        for email in email_list:
-            domain = email.split("@")[-1].lower() if "@" in email else ""
-            fallback[email] = "Individual" if domain in common_providers else "Business"
-        return fallback
+        return json.loads(response.text)
+    except Exception:
+        results = {}
+        for email in emails:
+            domain = email.split('@')[-1].lower() if '@' in email else ""
+            if domain in ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com"]:
+                results[email] = "Individual"
+            else:
+                results[email] = "Business"
+        return results
